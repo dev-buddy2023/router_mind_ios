@@ -1,0 +1,40 @@
+# Xcode
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+Pods/
+.build/
+
+# Swift Package Manager
+/.build
+/Packages
+*.build/
+
+# CocoaPods
+Pods/
+!Podfile
+!Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# macOS
+.DS_Store
+
+# Xcode breakpoint files
+xcshareddata/IDEWorkspaceChecks.plist
+xcdebugger/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
