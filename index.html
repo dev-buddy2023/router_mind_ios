@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RouterMind — 语音驱动的 AI 模型智能选择器</title>
+  <meta name="description" content="RouterMind is a voice-driven AI model selector that helps you find the optimal LLM model on OpenRouter through natural voice interaction.">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --card: #1a1a28;
+      --border: #2a2a3e;
+      --text: #e8e8f0;
+      --text-muted: #8888a0;
+      --accent: #7c5cfc;
+      --accent-glow: rgba(124, 92, 252, 0.3);
+      --green: #34d399;
+      --orange: #fbbf24;
+      --red: #f472b6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient background */
+    .bg-gradient {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%, rgba(124, 92, 252, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(52, 211, 153, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 50% at 20% 70%, rgba(244, 114, 182, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .lang-switch {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .lang-switch:hover {
+      background: var(--surface);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(124, 92, 252, 0.12);
+      border: 1px solid rgba(124, 92, 252, 0.25);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: 52px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 30%, var(--accent) 80%, var(--green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9b7cfc);
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface);
+      border-color: var(--accent);
+    }
+
+    /* Mockup / Demo */
+    .demo-section {
+      padding: 40px 0 80px;
+    }
+
+    .demo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .demo-mic {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), rgba(124, 92, 252, 0.4));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 24px;
+      box-shadow: 0 0 30px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+      50% { box-shadow: 0 0 40px var(--accent-glow); }
+    }
+
+    .demo-input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: var(--text);
+      font-size: 15px;
+      width: 100%;
+      margin-bottom: 20px;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .demo-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .recommendation {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .rec-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .rec-card:hover {
+      border-color: var(--accent);
+    }
+
+    .rec-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .rec-badge.gold { background: rgba(251, 191, 36, 0.15); }
+    .rec-badge.green { background: rgba(52, 211, 153, 0.15); }
+    .rec-badge.purple { background: rgba(124, 92, 252, 0.15); }
+
+    .rec-info h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .rec-info p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .rec-score {
+      margin-left: auto;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .rec-score .num {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .rec-score .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    /* Features */
+    .features {
+      padding: 80px 0;
+    }
+
+    .section-label {
+      text-align: center;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 48px;
+      font-size: 16px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Scoring dimensions */
+    .scoring {
+      padding: 60px 0;
+    }
+
+    .dims {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .dim {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .dim .num {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .dim .name {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Models supported */
+    .models-bar {
+      padding: 60px 0;
+      text-align: center;
+    }
+
+    .model-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .model-tag {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .model-tag:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    /* CTA */
+    .cta {
+      padding: 80px 0;
+      text-align: center;
+    }
+
+    .cta h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .cta p {
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .store-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 12px 28px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      transition: border-color 0.2s;
+    }
+
+    .store-badge:hover {
+      border-color: #666;
+    }
+
+    .store-badge .small {
+      font-size: 11px;
+      color: #999;
+      display: block;
+    }
+    .store-badge .big {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      margin: 0 12px;
+    }
+
+    footer a:hover {
+      color: var(--text);
+    }
+
+    footer p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 34px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .dims { grid-template-columns: repeat(2, 1fr); }
+      .nav-links a:not(.lang-switch) { display: none; }
+      .demo-card { padding: 24px; }
+      .rec-card { flex-wrap: wrap; }
+      .rec-score { margin-left: 64px; }
+    }
+
+    @media (max-width: 480px) {
+      .hero { padding: 50px 0 30px; }
+      .hero h1 { font-size: 28px; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-gradient"></div>
+
+<nav class="container">
+  <div class="logo">
+    <div class="logo-icon">🧠</div>
+    RouterMind
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#faq">FAQ</a>
+    <a href="support.html">Support</a>
+    <a href="privacy.html">Privacy</a>
+    <span class="lang-switch" onclick="toggleLang()">🌐 中文</span>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero container">
+  <div class="hero-badge">🎙️ Voice-First · OpenRouter · iOS</div>
+  <h1>Find Your Perfect<br>AI Model —<br>Just by Speaking</h1>
+  <p class="en-text">Speak naturally, get the best LLM recommendation from 200+ models. RouterMind scores, ranks, and picks your optimal AI companion.</p>
+  <p class="zh-text" style="display:none;">说出需求，从 200+ 模型中智能匹配最适合你的 AI 模型。语音驱动，三秒即得。</p>
+  <div class="hero-actions">
+    <a href="#" class="btn-primary">
+      <span>📱</span>
+      <span class="en-text">Download on App Store</span>
+      <span class="zh-text" style="display:none;">App Store 下载</span>
+    </a>
+    <a href="support.html" class="btn-secondary">
+      <span>📖</span>
+      <span class="en-text">Learn More</span>
+      <span class="zh-text" style="display:none;">了解更多</span>
+    </a>
+  </div>
+</section>
+
+<!-- Demo -->
+<section class="demo-section container">
+  <div class="demo-card">
+    <div class="demo-mic">🎤</div>
+    <div class="demo-input" style="border:none; background:transparent; padding:0 0 4px; color:var(--text-muted); font-size:14px;">
+      <span class="en-text">Try saying...</span>
+      <span class="zh-text" style="display:none;">试试说出...</span>
+    </div>
+    <div class="demo-input">"I need a cheap model for coding"</div>
+
+    <div class="recommendation">
+      <div class="rec-card">
+        <div class="rec-badge gold">🥇</div>
+        <div class="rec-info">
+          <h4>Claude 3.5 Haiku</h4>
+          <p>Best overall value — high quality at low cost</p>
+        </div>
+        <div class="rec-score">
+          <span class="num" style="color:var(--orange);">92</span>
+          <span class="label">Score</span>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-badge green">🌿</div>
+        <div class="rec-info">
+          <h4>Llama 3.1 70B</h4>
+          <p>Cheapest model scoring ≥70% quality</p>
+        </div>
+        <div class="rec-score">
+          <span class="num" style="color:var(--green);">80</span>
+          <span class="label">Score</span>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-badge purple">⚡</div>
+        <div class="rec-info">
+          <h4>Claude 3.5 Sonnet</h4>
+          <p>Most capable coding model available</p>
+        </div>
+        <div class="rec-score">
+          <span class="num" style="color:var(--accent);">98</span>
+          <span class="label">Score</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features container" id="features">
+  <div class="section-label">✦ Features</div>
+  <h2 class="section-title">
+    <span class="en-text">Why RouterMind?</span>
+    <span class="zh-text" style="display:none;">为什么选择 RouterMind？</span>
+  </h2>
+  <p class="section-sub">
+    <span class="en-text">More than a model browser — an intelligent selector that understands what you need.</span>
+    <span class="zh-text" style="display:none;">不止是模型浏览器，而是听懂你需求的智能选择器。</span>
+  </p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(124,92,252,0.12);">🎤</div>
+      <h3>
+        <span class="en-text">Voice-First</span>
+        <span class="zh-text" style="display:none;">语音优先</span>
+      </h3>
+      <p>
+        <span class="en-text">Just speak naturally. iOS Speech Recognition transcribes on-device — your voice never leaves your phone.</span>
+        <span class="zh-text" style="display:none;">自然语音输入，iOS 本地语音识别，你的声音不会离开手机。</span>
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(52,211,153,0.12);">🏆</div>
+      <h3>
+        <span class="en-text">Triple Recommendation</span>
+        <span class="zh-text" style="display:none;">三重推荐</span>
+      </h3>
+      <p>
+        <span class="en-text">Champion (best value), Eco-Choice (cheapest ≥70%), Absolute Power (most capable). Every need covered.</span>
+        <span class="zh-text" style="display:none;">最佳性价比、最便宜 70+ 分、最强性能——三种视角，一次满足。</span>
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(251,191,36,0.12);">📊</div>
+      <h3>
+        <span class="en-text">6-Dimension Scoring</span>
+        <span class="zh-text" style="display:none;">六维评分</span>
+      </h3>
+      <p>
+        <span class="en-text">Quality, Speed, Cost, Context, Capability, Reliability — a holistic view of every model.</span>
+        <span class="zh-text" style="display:none;">质量、速度、成本、上下文、能力、可靠性——全方位评估每个模型。</span>
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(244,114,182,0.12);">🔍</div>
+      <h3>
+        <span class="en-text">200+ Models</span>
+        <span class="zh-text" style="display:none;">200+ 模型</span>
+      </h3>
+      <p>
+        <span class="en-text">Browse with smart filters: Chat, Image, Video, Embedding, TTS, STT. Find exactly what you need.</span>
+        <span class="zh-text" style="display:none;">Chat、Image、Video、Embedding、TTS、STT 六大类型智能筛选。</span>
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(52,211,153,0.12);">💚</div>
+      <h3>
+        <span class="en-text">Privacy First</span>
+        <span class="zh-text" style="display:none;">隐私优先</span>
+      </h3>
+      <p>
+        <span class="en-text">API Key stored in iOS Keychain. No analytics. No tracking. No servers. Your data stays yours.</span>
+        <span class="zh-text" style="display:none;">API Key 存 iOS Keychain，无分析无追踪无服务器，数据永远属于你。</span>
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon" style="background:rgba(251,191,36,0.12);">🌐</div>
+      <h3>
+        <span class="en-text">Bilingual</span>
+        <span class="zh-text" style="display:none;">中英双语</span>
+      </h3>
+      <p>
+        <span class="en-text">Full English and Chinese support — voice, UI, and AI recommendations. Switch anytime.</span>
+        <span class="zh-text" style="display:none;">完整中英双语支持——语音、界面、AI 推荐，随时切换。</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Scoring -->
+<section class="scoring container">
+  <div class="section-label">✦ Scoring</div>
+  <h2 class="section-title" style="font-size:28px;">
+    <span class="en-text">6 Dimensions of Intelligence</span>
+    <span class="zh-text" style="display:none;">六维智能评分体系</span>
+  </h2>
+  <div class="dims">
+    <div class="dim"><div class="num">⭐</div><div class="name">Quality / 质量</div></div>
+    <div class="dim"><div class="num">⚡</div><div class="name">Speed / 速度</div></div>
+    <div class="dim"><div class="num">💰</div><div class="name">Cost / 成本</div></div>
+    <div class="dim"><div class="num">📐</div><div class="name">Context / 上下文</div></div>
+    <div class="dim"><div class="num">🎯</div><div class="name">Capability / 能力</div></div>
+    <div class="dim"><div class="num">🔒</div><div class="name">Reliability / 可靠</div></div>
+  </div>
+</section>
+
+<!-- Models -->
+<section class="models-bar container">
+  <div class="section-label">✦ Supported</div>
+  <h2 class="section-title" style="font-size:28px;">
+    <span class="en-text">200+ Models from OpenRouter</span>
+    <span class="zh-text" style="display:none;">支持 OpenRouter 200+ 模型</span>
+  </h2>
+  <div class="model-tags">
+    <span class="model-tag">GPT-4o</span>
+    <span class="model-tag">GPT-4o Mini</span>
+    <span class="model-tag">Claude 3.5 Sonnet</span>
+    <span class="model-tag">Claude 3.5 Haiku</span>
+    <span class="model-tag">Gemini 2.0 Flash</span>
+    <span class="model-tag">Llama 3.1 405B</span>
+    <span class="model-tag">Llama 3.1 70B</span>
+    <span class="model-tag">DeepSeek V3</span>
+    <span class="model-tag">DeepSeek R1</span>
+    <span class="model-tag">Mistral Large</span>
+    <span class="model-tag">Qwen 2.5</span>
+    <span class="model-tag">Mixtral 8x7B</span>
+    <span class="model-tag">Gemma 2</span>
+    <span class="model-tag">Command R+</span>
+    <span class="model-tag">DALL·E 3</span>
+    <span class="model-tag">Stable Diffusion</span>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta container">
+  <h2>
+    <span class="en-text">Stop Searching. Start Speaking.</span>
+    <span class="zh-text" style="display:none;">别再搜索了，说出来就好。</span>
+  </h2>
+  <p>
+    <span class="en-text">RouterMind is coming soon on the App Store.</span>
+    <span class="zh-text" style="display:none;">RouterMind 即将上架 App Store。</span>
+  </p>
+  <a href="#" class="store-badge">
+    <span style="font-size:28px;">🍎</span>
+    <span>
+      <span class="small">Download on the</span>
+      <span class="big">App Store</span>
+    </span>
+  </a>
+</section>
+
+<!-- Footer -->
+<footer class="container">
+  <div>
+    <a href="support.html">
+      <span class="en-text">Support</span>
+      <span class="zh-text" style="display:none;">技术支持</span>
+    </a>
+    <a href="privacy.html">
+      <span class="en-text">Privacy Policy</span>
+      <span class="zh-text" style="display:none;">隐私政策</span>
+    </a>
+    <a href="https://github.com/dev-buddy2023/router_mind_ios">GitHub</a>
+  </div>
+  <p>© 2026 RouterMind. All rights reserved.</p>
+</footer>
+
+<script>
+let lang = 'en';
+
+function toggleLang() {
+  const isZh = lang === 'en';
+  lang = isZh ? 'zh' : 'en';
+
+  document.querySelectorAll('.en-text').forEach(el => {
+    el.style.display = isZh ? 'none' : '';
+  });
+  document.querySelectorAll('.zh-text').forEach(el => {
+    el.style.display = isZh ? '' : 'none';
+  });
+
+  const btn = document.querySelector('.lang-switch');
+  btn.textContent = isZh ? '🌐 English' : '🌐 中文';
+}
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const id = a.getAttribute('href').slice(1);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+
+</body>
+</html>
